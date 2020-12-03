@@ -8,7 +8,7 @@ var fPlayerY = 13.5;
 var fPlayerA = 3.1;
 var fFOV = 3.14159 / 4.0;
 var fDepth = 16.0;
-var fSpeed = 0.3;
+var fSpeed = 0.16;
 
 var map =   "#########.......";
 map +=      "#...............";
@@ -76,8 +76,7 @@ document.addEventListener("keyup", function(key) {
         pressedKeys[key.code] = false;
     }
 });
-var x_width = 10;
-var y_height = 1;
+var x_width = 1;
 function gameLoop() {
     tp2 = new Date();
     fElapsedTime = Math.abs(tp2 - tp1);
@@ -85,11 +84,11 @@ function gameLoop() {
     ctx.fillRect(0,0,screen.width, screen.height);
     
     if (pressedKeys['KeyA']) {
-        fPlayerA -= 0.05;
+        fPlayerA -= 0.022;
         console.log("A");
     }
     if (pressedKeys['KeyD']) {
-       fPlayerA += 0.05;
+       fPlayerA += 0.022;
         console.log("D");
    }
     if (pressedKeys['KeyW']) {
@@ -217,40 +216,13 @@ function gameLoop() {
         if (bBoundary)
             nShade = '#333333'; // Black it out
 			
-			for (var y = 0; y < nScreenHeight; y+=y_height)
-			{
-				// Each Row
-				if(y <= nCeiling) {
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(x, y, x_width, y*nScreenWidth);
-                    //ctx.fillRect(y, x, y*nScreenWidth, x_width); //----------------------------
-					//ctx.fillRect(y*nScreenWidth, x, 1, x_width);
-                    //screen[y*nScreenWidth + x] = ' ';
-                }
-				else if(y > nCeiling && y <= nFloor) {
-                    ctx.fillStyle = nShade;
-                    ctx.fillRect(x, y, x_width, y*nScreenWidth); //----------------------------
-					//ctx.fillRect(y, x, y*nScreenWidth, x_width);
-                    //ctx.fillRect(y*nScreenWidth, x, 1, x_width);
-                    //screen[y*nScreenWidth + x] = nShade;
-                }
-				else // Floor
-				{				
-					// Shade floor based on distance
-					var b = 1.0 - ((y -nScreenHeight/2.0) / (nScreenHeight / 2.0));
-					if (b < 0.25)		nShade = 'brown';
-					else if (b < 0.5)	nShade = 'red';
-					else if (b < 0.75)	nShade = 'orange';
-					else if (b < 0.9)	nShade = 'yellow';
-					else				nShade = 'white';
-					ctx.fillStyle = nShade;
-                    ctx.fillRect(x, y, x_width, y*nScreenWidth); //----------------------------
-                    //ctx.fillRect(y*nScreenWidth, x, 1, x_width);
-                    //ctx.fillRect(y, x, y*nScreenWidth, x_width);
-                    //screen[y*nScreenWidth + x] = nShade;
-				}
-			}
-		}
+        ctx.fillStyle = "white";
+		ctx.fillRect(x, 0, 1, nCeiling);
+		ctx.fillStyle = nShade;
+		ctx.fillRect(x, nCeiling, 1, nScreenHeight - nCeiling);
+		ctx.fillStyle = "black";
+		ctx.fillRect(x, nFloor+1, 1, nScreenHeight - nFloor);
+	}
         
 
 		// Display Stats
@@ -274,7 +246,7 @@ function gameLoop() {
     pPlayerY.innerHTML = fPlayerY;
     pPlayerA.innerHTML = fPlayerA;
     FPS.innerHTML = 1000/fElapsedTime;
-    setTimeout(gameLoop, 50);
+    setTimeout(gameLoop, 20);
 }
 gameLoop();
 
