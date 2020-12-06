@@ -1,19 +1,26 @@
-var nScreenWidth = 750;
-var nScreenHeight = 500;
-var nMapWidth = 16;
-var nMapHeight = 16;
+var screen = document.getElementById("canv");
+var ctx = screen.getContext('2d');
+var pPlayerX = document.getElementById("fPlayerX");
+var pPlayerY = document.getElementById("fPlayerY");
+var pPlayerA = document.getElementById("fPlayerA");
+var FPS = document.getElementById("FPS");
 
-var fPlayerX = 14.5;
-var fPlayerY = 14.5;
-var fPlayerA = 3.1;
-
+var nScreenWidth = screen.width;
+var nScreenHeight = screen.height;
 
 var fFOV = 3.14159 / 4.0;
 var fDepth = 16.0;
 var fSpeed = 0.3;
 
+var fPlayerX = 14.5;
+var fPlayerY = 14.5;
+var fPlayerA = 3.1;
+
+var nMapWidth = 16;
+var nMapHeight = 16;
+
 var map =   "#########.......";
-map +=      "#...............";
+map +=      "#.......@.......";
 map +=      "#.......########";
 map +=      "#..............#";
 map +=      "#......##......#";
@@ -32,13 +39,6 @@ map +=      "################";
 var tp1 = new Date();
 var tp2 = new Date();
 
-var screen = document.getElementById("canv");
-var ctx = screen.getContext('2d');
-var pPlayerX = document.getElementById("fPlayerX");
-var pPlayerY = document.getElementById("fPlayerY");
-var pPlayerA = document.getElementById("fPlayerA");
-var FPS = document.getElementById("FPS");
-
 var pressedKeys = { 
     "KeyW": false,
     "KeyA": false,
@@ -46,18 +46,17 @@ var pressedKeys = {
     "KeyD": false
 };
 
-document.addEventListener("keydown", function(key) {
+function controlKeyDown(key) {
     if (pressedKeys[key.code] !== "underfined") {
         pressedKeys[key.code] = true;
     }
-});
-document.addEventListener("keyup", function(key) {
+}
+function controlKeyUp(key) {
     if (pressedKeys[key.code] !== "underfined") {
         pressedKeys[key.code] = false;
     }
-});
-var x_width = 1;
-var y_height = 1;
+}
+
 function gameLoop() {
     tp2 = new Date();
     fElapsedTime = Math.abs(tp2 - tp1);
@@ -66,7 +65,7 @@ function gameLoop() {
 
     controlsKeys();
     
-    for (var x = 0; x < nScreenWidth; x+=x_width) 
+    for (var x = 0; x < nScreenWidth; x++) 
     {
         var fRayAngle = (fPlayerA - fFOV/2.0) + (x / nScreenWidth) * fFOV;
 
@@ -139,7 +138,7 @@ function gameLoop() {
 
         var pos = (-screenAr.width+x)*4;
         var inc = screenAr.width*4;
-		for (var y = 0; y < nScreenHeight; y+=y_height)
+		for (var y = 0; y < nScreenHeight; y++)
 		{
             pos += inc;
             // Each Row
@@ -183,13 +182,17 @@ function gameLoop() {
     pPlayerY.innerHTML = fPlayerY;
     pPlayerA.innerHTML = fPlayerA;
     FPS.innerHTML = 1000/fElapsedTime;
-    setTimeout(gameLoop, 50);
+    if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
+        setTimeout(gameLoop, 10);
+    }
+    else {
+        gameFinish();
+    }
 }
     
 function drawMap() {
     var width = mapAr.width/10;
     var height = mapAr.height/10;
-    //debugger;
     for (var ny = 0; ny < height; ny++) {
         var mapY = ny*width;
         var mapArY = ny*10*width;
@@ -215,11 +218,6 @@ function drawMap() {
                 mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+1] = 0;
                 mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+2] = 0;
                 mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+3] = 255;
-
-                // mapAr.data[(Math.floor(fPlayerY*10)*mapAr.width + Math.floor(fPlayerX*10))*4 + comp] = 255;
-                // mapAr.data[(Math.floor(fPlayerY*10)*mapAr.width + Math.floor(fPlayerX*10))*4 + comp] = 0;
-                // mapAr.data[(Math.floor(fPlayerY*10)*mapAr.width + Math.floor(fPlayerX*10))*4 + comp] = 0;
-                // mapAr.data[(Math.floor(fPlayerY*10)*mapAr.width + Math.floor(fPlayerX*10))*4 + comp] = 255;
         }
     }
     ctx.putImageData(mapAr, nScreenWidth - mapAr.width, 0);
@@ -265,19 +263,131 @@ function ColorGlyph(x, y, img) {
     return [img.data[pos],img.data[pos+1],img.data[pos+2],img.data[pos+3]];
 }
 
-var screenAr = ctx.createImageData(750, 500);
+var screenAr = ctx.createImageData(nScreenWidth, nScreenHeight);
 var mapAr = ctx.createImageData(nMapWidth*10, nMapHeight*10);
 
-var spriteWall = {};
-spriteWall.data = []
-spriteWall.width = 32;
-spriteWall.height = 32;
-for (var i = 0; i < 32; i++) {
-    for (var j = 0; j < 32; j++) {
-        spriteWall.data.push(Math.floor( Math.random() * 256 ));
-        spriteWall.data.push(Math.floor( Math.random() * 256 ));
-        spriteWall.data.push(Math.floor( Math.random() * 256 ));
-        spriteWall.data.push(255);
+function gameFinish() {
+    ctx.font = "100px";
+    ctx.fillText("WIN! Press any key", screen.width/2, screen.height/2);
+    document.removeEventListener("keydown", controlKeyDown);
+    document.removeEventListener("keyup", controlKeyUp);
+    document.addEventListener("keydown", exitToMenu);
+    //menu();
+}
+
+function exitToMenu() {
+    document.removeEventListener("keydown", exitToMenu);
+    menu();
+}
+//var spriteWall = {};
+//spriteWall.data = []
+//spriteWall.width = 32;
+//spriteWall.height = 32;
+//for (var i = 0; i < 32; i++) {
+//    for (var j = 0; j < 32; j++) {
+//        spriteWall.data.push(Math.floor( Math.random() * 256 ));
+//        spriteWall.data.push(Math.floor( Math.random() * 256 ));
+//        spriteWall.data.push(Math.floor( Math.random() * 256 ));
+//        spriteWall.data.push(255);
+//    }
+//}
+//gameLoop();
+
+function startGame() {
+    nScreenWidth = screen.width;
+    nScreenHeight = screen.height;
+
+    fFOV = 3.14159 / 4.0;
+    fDepth = 16.0;
+    fSpeed = 0.3;
+
+    fPlayerX = 14.5;
+    fPlayerY = 14.5;
+    fPlayerA = 3.1;
+
+    nMapWidth = 16;
+    nMapHeight = 16;
+
+    map =   "#########.......";
+    map +=  "#.......@.......";
+    map +=  "#.......########";
+    map +=  "#..............#";
+    map +=  "#......##......#";
+    map +=  "#......##......#";
+    map +=  "#..............#";
+    map +=  "###............#";
+    map +=  "##.............#";
+    map +=  "#......####..###";
+    map +=  "#......#.......#";
+    map +=  "#......#.......#";
+    map +=  "#..............#";
+    map +=  "#......#########";
+    map +=  "#..............#";
+    map +=  "################";
+
+    tp1 = new Date();
+    tp2 = new Date();
+
+    pressedKeys = { 
+        "KeyW": false,
+        "KeyA": false,
+        "KeyS": false,
+        "KeyD": false
+    };
+
+    document.addEventListener("keydown", controlKeyDown);
+    document.addEventListener("keyup", controlKeyUp);
+    gameLoop();
+}
+
+//function canvasMouseDown() {
+//
+//}
+//function canvasMouseMove() {
+//
+//}
+//function canvasMouseUp() {
+//    screen.removeEventListener
+//}
+var menuClass = {
+    "menu": ["Play", "Hello"],
+    "selected": 0
+}
+function menuKeys(key) {
+    if (key.code == "KeyW") {
+        if (menuClass.selected > 0) {
+            menuClass.selected--;
+        }
+        drawMenu();
+    }
+    if (key.code == "KeyS") {
+        if (menuClass.selected < menuClass.menu.length - 1) {
+            menuClass.selected++;
+        }
+        drawMenu();
+    }
+    if (key.code == "Enter") {
+        switch (menuClass.selected) {
+            case 0: {
+                document.removeEventListener("keydown", menuKeys);
+                startGame();
+                break;
+            }
+        }
     }
 }
-gameLoop();
+function drawMenu() {
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,screen.width,screen.height);
+    ctx.font = "30px";
+    menuClass.menu.forEach(function(item, idx) {
+        ctx.fillStyle = idx == menuClass.selected ? "red" : "black";
+        ctx.fillText(item, screen.width/2, screen.height/2 + idx*30);
+    });
+}
+function menu() {
+    //debugger;
+    document.addEventListener("keydown", menuKeys);
+    drawMenu();
+}
+menu();
