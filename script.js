@@ -19,22 +19,10 @@ var fPlayerA = 3.1;
 var nMapWidth = 16;
 var nMapHeight = 16;
 
-var map =   "#########.......";
-map +=      "#.......@.......";
-map +=      "#.......########";
-map +=      "#..............#";
-map +=      "#......##......#";
-map +=      "#......##......#";
-map +=      "#..............#";
-map +=      "###............#";
-map +=      "##.............#";
-map +=      "#......####..###";
-map +=      "#......#.......#";
-map +=      "#......#.......#";
-map +=      "#..............#";
-map +=      "#......#########";
-map +=      "#..............#";
-map +=      "################";
+var screenAr;
+var mapAr;
+
+var map;
 
 var tp1 = new Date();
 var tp2 = new Date();
@@ -67,14 +55,14 @@ function gameLoop() {
     
     for (var x = 0; x < nScreenWidth; x++) 
     {
-        var fRayAngle = (fPlayerA - fFOV/2.0) + (x / nScreenWidth) * fFOV;
+        var fRayAngle = (fPlayerA - fFOV/2.0) + (fFOV / nScreenWidth) * x;
 
         // Find distance to wall
         var fStepSize = 0.1;		  // Increment size for ray casting, decrease to increase										
         var fDistanceToWall = 0.0; //                                      resolution
 
         var bHitWall = false;		// Set when ray hits wall block
-        var bBoundary = false;		// Set when ray hits boundary between two wall blocks
+
 
         var fEyeX = Math.sin(fRayAngle); // Unit vector for ray in player space
         var fEyeY = Math.cos(fRayAngle);
@@ -263,9 +251,6 @@ function ColorGlyph(x, y, img) {
     return [img.data[pos],img.data[pos+1],img.data[pos+2],img.data[pos+3]];
 }
 
-var screenAr = ctx.createImageData(nScreenWidth, nScreenHeight);
-var mapAr = ctx.createImageData(nMapWidth*10, nMapHeight*10);
-
 function gameFinish() {
     ctx.font = "100px";
     ctx.fillText("WIN! Press any key", screen.width/2, screen.height/2);
@@ -293,7 +278,7 @@ function exitToMenu() {
 //}
 //gameLoop();
 
-function startGame() {
+function startGame(isRandomMaze) {
     nScreenWidth = screen.width;
     nScreenHeight = screen.height;
 
@@ -301,29 +286,49 @@ function startGame() {
     fDepth = 16.0;
     fSpeed = 0.3;
 
-    fPlayerX = 14.5;
-    fPlayerY = 14.5;
-    fPlayerA = 3.1;
+    var maze;
+    if (isRandomMaze) {
+        maze = mazeGeneration(15, 15)
 
-    nMapWidth = 16;
-    nMapHeight = 16;
+        fPlayerX = maze.fPlayerX;
+        fPlayerY = maze.fPlayerY;
+        fPlayerA = maze.fPlayerA;
 
-    map =   "#########.......";
-    map +=  "#.......@.......";
-    map +=  "#.......########";
-    map +=  "#..............#";
-    map +=  "#......##......#";
-    map +=  "#......##......#";
-    map +=  "#..............#";
-    map +=  "###............#";
-    map +=  "##.............#";
-    map +=  "#......####..###";
-    map +=  "#......#.......#";
-    map +=  "#......#.......#";
-    map +=  "#..............#";
-    map +=  "#......#########";
-    map +=  "#..............#";
-    map +=  "################";
+        nMapWidth = maze.width;
+        nMapHeight = maze.height;
+
+        map = maze.map;
+    }
+    else {
+        fPlayerX = 14.5;
+        fPlayerY = 14.5;
+        fPlayerA = 3.1;
+
+        nMapWidth = 16;
+        nMapHeight = 16;
+
+        map =   "#########.......";
+        map +=  "#.......@.......";
+        map +=  "#.......########";
+        map +=  "#..............#";
+        map +=  "#......##......#";
+        map +=  "#......##......#";
+        map +=  "#..............#";
+        map +=  "###............#";
+        map +=  "##.............#";
+        map +=  "#......####..###";
+        map +=  "#......#.......#";
+        map +=  "#......#.......#";
+        map +=  "#..............#";
+        map +=  "#......#########";
+        map +=  "#..............#";
+        map +=  "################";
+    }
+
+    screenAr = ctx.createImageData(nScreenWidth, nScreenHeight);
+    mapAr = ctx.createImageData(nMapWidth*10, nMapHeight*10);
+
+/* конец блока */
 
     tp1 = new Date();
     tp2 = new Date();
@@ -350,7 +355,7 @@ function startGame() {
 //    screen.removeEventListener
 //}
 var menuClass = {
-    "menu": ["Play", "Hello"],
+    "menu": ["Start default maze", "Start random maze"],
     "selected": 0
 }
 function menuKeys(key) {
@@ -370,9 +375,15 @@ function menuKeys(key) {
         switch (menuClass.selected) {
             case 0: {
                 document.removeEventListener("keydown", menuKeys);
-                startGame();
+                startGame(false);
                 break;
             }
+            case 1:{
+                document.removeEventListener("keydown", menuKeys);
+                startGame(true);
+                break;
+            }
+
         }
     }
 }
@@ -386,7 +397,6 @@ function drawMenu() {
     });
 }
 function menu() {
-    //debugger;
     document.addEventListener("keydown", menuKeys);
     drawMenu();
 }
