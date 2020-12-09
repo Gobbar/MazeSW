@@ -4,6 +4,9 @@ var pPlayerX = document.getElementById("fPlayerX");
 var pPlayerY = document.getElementById("fPlayerY");
 var pPlayerA = document.getElementById("fPlayerA");
 var FPS = document.getElementById("FPS");
+const input = document.createElement("input");
+input.type = "file";
+input.addEventListener("change", setTexture);
 
 var nScreenWidth = screen.width;
 var nScreenHeight = screen.height;
@@ -57,34 +60,28 @@ function gameLoop() {
     {
         var fRayAngle = (fPlayerA - fFOV/2.0) + (fFOV / nScreenWidth) * x;
 
-        // Find distance to wall
-        var fStepSize = 0.1;		  // Increment size for ray casting, decrease to increase										
-        var fDistanceToWall = 0.0; //                                      resolution
+        var fStepSize = 0.1;									
+        var fDistanceToWall = 0.0;
 
-        var bHitWall = false;		// Set when ray hits wall block
+        var bHitWall = false;
 
-
-        var fEyeX = Math.sin(fRayAngle); // Unit vector for ray in player space
+        var fEyeX = Math.sin(fRayAngle);
         var fEyeY = Math.cos(fRayAngle);
         var fSampleX = 0.0;
         
-        // Incrementally cast ray from player, along ray angle, testing for 
-        // intersection with a block
         while (!bHitWall && fDistanceToWall < fDepth)
         {
             fDistanceToWall += fStepSize;
             var nTestX = Math.floor(fPlayerX + fEyeX * fDistanceToWall);
             var nTestY = Math.floor(fPlayerY + fEyeY * fDistanceToWall);
             
-            // Test if ray is out of bounds
             if (nTestX < 0 || nTestX >= nMapWidth || nTestY < 0 || nTestY >= nMapHeight)
             {
-                bHitWall = true;			// Just set distance to maximum depth
+                bHitWall = true;
                 fDistanceToWall = fDepth;
             }
             else
             {
-                // Ray is inbounds so test to see if the ray cell is a wall block
                 if (map[nTestX * nMapWidth + nTestY] == '#')
                 {
                     fDistanceToWall -= fStepSize;
@@ -94,8 +91,8 @@ function gameLoop() {
 						nTestX = Math.floor(fPlayerX + fEyeX * fDistanceToWall);
 						nTestY = Math.floor(fPlayerY + fEyeY * fDistanceToWall);
 						fDistanceToWall += fStepSize/10;
-					}
-                    // Ray has hit wall
+                    }
+                    
                     bHitWall = true;
 
                     var fBlockMidX = nTestX + 0.5;
@@ -104,10 +101,10 @@ function gameLoop() {
 					var fTestPointX = fPlayerX + fEyeX * fDistanceToWall;
 					var fTestPointY = fPlayerY + fEyeY * fDistanceToWall;
 
-					//var fTestAngle = Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
                     var fTestAngle = Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
-                    //console.log(nTestX, nTestY);
+
                     pPlayerA.innerHTML = fTestAngle;
+
 					if (fTestAngle >= -3.14159 * 0.25 && fTestAngle < 3.14159 * 0.25)
 						fSampleX = fTestPointY - nTestY;
 					if (fTestAngle >= 3.14159 * 0.25 && fTestAngle < 3.14159 * 0.75)
@@ -120,7 +117,6 @@ function gameLoop() {
             }
         }
 		
-        // Calculate distance to ceiling and floor
         var nCeiling = Math.floor((nScreenHeight / 2.0) - (nScreenHeight / fDistanceToWall));
         var nFloor = nScreenHeight - nCeiling;
 
@@ -129,7 +125,6 @@ function gameLoop() {
 		for (var y = 0; y < nScreenHeight; y++)
 		{
             pos += inc;
-            // Each Row
 			if (y <= nCeiling) {
                 screenAr.data[pos] = 255;
                 screenAr.data[pos+1] = 255;
@@ -137,8 +132,7 @@ function gameLoop() {
                 screenAr.data[pos+3] = 255;
             }
             else {
-                if (y > nCeiling && y <= nFloor) {
-            // Draw Wall
+                if (y > nCeiling && y <= nFloor) { //Стены
                     if (fDistanceToWall < fDepth) {
                         var fSampleY = (y - nCeiling) / (nFloor - nCeiling);
                         var a = ColorGlyph(fSampleX, fSampleY, spriteWall);
@@ -147,14 +141,14 @@ function gameLoop() {
                         screenAr.data[pos+2] = a[2];
                         screenAr.data[pos+3] = a[3];
                     }
-                    else {
+                    else { //Дальность прорисовки
                         screenAr.data[pos] = 255;
                         screenAr.data[pos+1] = 255;
                         screenAr.data[pos+2] = 255;
                         screenAr.data[pos+3] = 255;
                     }
                 }
-                else // Floor
+                else //Пол
                 {
                     screenAr.data[pos] = 0;
                     screenAr.data[pos+1] = 0;
@@ -307,28 +301,26 @@ function startGame(isRandomMaze) {
         nMapWidth = 16;
         nMapHeight = 16;
 
-        map =   "#########.......";
-        map +=  "#.......@.......";
-        map +=  "#.......########";
+        map =   "#########@######";
+        map +=  "#..............#";
+        map +=  "#..............#";
+        map +=  "#..............#";
+        map +=  "#..............#";
         map +=  "#..............#";
         map +=  "#......##......#";
         map +=  "#......##......#";
         map +=  "#..............#";
-        map +=  "###............#";
-        map +=  "##.............#";
-        map +=  "#......####..###";
-        map +=  "#......#.......#";
-        map +=  "#......#.......#";
         map +=  "#..............#";
-        map +=  "#......#########";
+        map +=  "#......##......#";
+        map +=  "#......##......#";
+        map +=  "#..............#";
+        map +=  "#..............#";
         map +=  "#..............#";
         map +=  "################";
     }
 
     screenAr = ctx.createImageData(nScreenWidth, nScreenHeight);
     mapAr = ctx.createImageData(nMapWidth*10, nMapHeight*10);
-
-/* конец блока */
 
     tp1 = new Date();
     tp2 = new Date();
@@ -345,17 +337,8 @@ function startGame(isRandomMaze) {
     gameLoop();
 }
 
-//function canvasMouseDown() {
-//
-//}
-//function canvasMouseMove() {
-//
-//}
-//function canvasMouseUp() {
-//    screen.removeEventListener
-//}
 var menuClass = {
-    "menu": ["Start default maze", "Start random maze"],
+    "menu": ["Start default maze", "Start random maze", "Set your texture (32 x 32)"],
     "selected": 0
 }
 function menuKeys(key) {
@@ -383,7 +366,10 @@ function menuKeys(key) {
                 startGame(true);
                 break;
             }
-
+            case 2: {
+                input.click();
+                break;
+            }
         }
     }
 }
@@ -400,4 +386,42 @@ function menu() {
     document.addEventListener("keydown", menuKeys);
     drawMenu();
 }
+
+function setTexture() {
+    var file = this.files[0];
+    var type = file.type.replace(/\/.+/, "");
+    if (type != "image") {
+        drawError("Loaded file is not image");
+        input.value = null;
+        return;
+    }
+    var img = document.createElement("img");
+    img.addEventListener("load", ()=>{
+        if (img.width != 32 || img.height != 32) {
+            drawError("Image size is not 32x32");
+            input.value = null;
+            return;
+        }
+        ctx.drawImage(img, 0, 0);
+        var t = ctx.getImageData(0,0,32,32);
+        spriteWall = {};
+        spriteWall.data = [];
+        t.data.forEach(function(item) {
+            spriteWall.data.push(item);
+        });
+        spriteWall.width = t.width;
+        spriteWall.height = t.height;
+        drawMenu();
+    });
+    img.src = URL.createObjectURL(file);
+    URL.revokeObjectURL(file);
+}
+function drawError(errorString) {
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,750,50);
+    ctx.font = "40px";
+    ctx.fillStyle = "black";
+    ctx.fillText(errorString, 10, 10);
+}
+
 menu();
