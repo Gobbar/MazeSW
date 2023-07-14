@@ -52,10 +52,28 @@ function gameLoop() {
     tp2 = new Date();
     fElapsedTime = Math.abs(tp2 - tp1);
     tp1 = tp2;
-    ctx.fillRect(0,0,screen.width, screen.height);
 
     controlsKeys();
-    
+    drawScene();
+    drawMap();
+    displayParams();
+    if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
+        setTimeout(gameLoop, 0);
+    }
+    else {
+        gameFinish();
+    }
+}
+
+function displayParams() {
+    pPlayerX.innerHTML = fPlayerX;
+    pPlayerY.innerHTML = fPlayerY;
+    pPlayerA.innerHTML = fPlayerA;
+    FPS.innerHTML = 1000/fElapsedTime;
+}
+
+function drawScene() {
+    ctx.fillRect(0,0,screen.width, screen.height);
     for (var x = 0; x < nScreenWidth; x++) 
     {
         var fRayAngle = (fPlayerA - fFOV/2.0) + (fFOV / nScreenWidth) * x;
@@ -159,17 +177,6 @@ function gameLoop() {
 		}
     }
     ctx.putImageData(screenAr, 0, 0);
-    drawMap();
-    pPlayerX.innerHTML = fPlayerX;
-    pPlayerY.innerHTML = fPlayerY;
-    pPlayerA.innerHTML = fPlayerA;
-    FPS.innerHTML = 1000/fElapsedTime;
-    if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
-        setTimeout(gameLoop, 10);
-    }
-    else {
-        gameFinish();
-    }
 }
     
 function drawMap() {
@@ -194,12 +201,15 @@ function drawMap() {
             }
         }
     }
-    for (var j = 0; j < 2; ++j) {
-        for (var i = 0; i < 2; ++i) { 
-                mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4] = 255;
-                mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+1] = 0;
-                mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+2] = 0;
-                mapAr.data[(Math.floor(fPlayerX*10 + j)*mapAr.width + Math.floor(fPlayerY*10 + i))*4+3] = 255;
+    // let a = Math.floor(fPlayerX*10)*mapAr.width*4 + j*mapAr.width*4 + Math.floor(fPlayerY*10)*4 + i*4;
+    let jInit = Math.floor(fPlayerX*10)*mapAr.width*4, jStep = mapAr.width*4;
+    let iInit = Math.floor(fPlayerY*10)*4, iStep = 4; 
+    for (var j = jInit; j < jInit + 2 * jStep; j += jStep) {
+        for (var i = iInit; i < iInit + 2 * iStep; i += iStep) { 
+                mapAr.data[j + i] = 255;
+                mapAr.data[j + i+1] = 0;
+                mapAr.data[j + i+2] = 0;
+                mapAr.data[j + i+3] = 255;
         }
     }
     ctx.putImageData(mapAr, nScreenWidth - mapAr.width, 0);
