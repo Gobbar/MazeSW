@@ -1,3 +1,7 @@
+import { DocumentToKeyboardAdapter } from './DocumentToKeyboardAdapter.mjs';
+import { InputController } from './InputController.mjs';
+import { KeyboardObserver } from './KeyboardObserver.mjs';
+
 var screen = document.getElementById("canv");
 var ctx = screen.getContext('2d');
 var pPlayerX = document.getElementById("fPlayerX");
@@ -23,50 +27,43 @@ var fPlayerA = 3.1;
 var nMapWidth = 16;
 var nMapHeight = 16;
 
-var screenAr;
-var mapAr;
+var screenAr = ctx.createImageData(nScreenWidth, nScreenHeight);
+var mapAr = ctx.createImageData(nMapWidth*10, nMapHeight*10);
 
-var map;
+var map = "";
 
 var tp1 = new Date();
 var tp2 = new Date();
 
-var pressedKeys = { 
-	"KeyW": false,
-	"KeyA": false,
-	"KeyS": false,
-	"KeyD": false
-};
+/**
+ * @param {InputController} inputController.
+ * @param {KeyboardObserver} keyboardObserver.
+ * @returns {Function} Game loop function.
+ */
+function getGameLoop(inputController, keyboardObserver) {
+	function gameLoop() {
+		tp2 = new Date();
+		const fElapsedTime = Math.abs(tp2 - tp1);
+		tp1 = tp2;
 
-function controlKeyDown(key) {
-	if (pressedKeys[key.code] !== "underfined") {
-		pressedKeys[key.code] = true;
+		controlsKeys(inputController);
+		drawScene();
+		drawMap();
+		displayParams(fElapsedTime);
+		if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
+			setTimeout(gameLoop, 0);
+		}
+		else {
+			gameFinish(inputController, keyboardObserver);
+		}
 	}
+
+	return gameLoop;
 }
 
-function controlKeyUp(key) {
-	if (pressedKeys[key.code] !== "underfined") {
-		pressedKeys[key.code] = false;
-	}
-}
-
-function gameLoop() {
-	tp2 = new Date();
-	const fElapsedTime = Math.abs(tp2 - tp1);
-	tp1 = tp2;
-
-	controlsKeys();
-	drawScene();
-	drawMap();
-	displayParams(fElapsedTime);
-	if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
-		setTimeout(gameLoop, 0);
-	}
-	else {
-		gameFinish();
-	}
-}
-
+/**
+ * @param {Number} deltaTime
+ */
 function displayParams(deltaTime) {
 	pPlayerX.innerHTML = fPlayerX;
 	pPlayerY.innerHTML = fPlayerY;
@@ -216,37 +213,41 @@ function drawMap() {
 	ctx.putImageData(mapAr, nScreenWidth - mapAr.width, 0);
 }
 
-function controlsKeys() {
-	if (pressedKeys['KeyA']) {
+/**
+ * @param {InputController} inputController
+ */
+function controlsKeys(inputController) {
+	if (inputController.checkAction("move_left")) {
 		fPlayerA -= 0.05;
-		// console.log("A");
 	}
-	if (pressedKeys['KeyD']) {
+	if (inputController.checkAction("move_right")) {
 		fPlayerA += 0.05;
-		// console.log("D");
 	}
-	if (pressedKeys['KeyW']) {
-	   fPlayerX += Math.sin(fPlayerA) * fSpeed;
-			fPlayerY += Math.cos(fPlayerA) * fSpeed;
-			if (map[Math.floor(fPlayerX) * nMapWidth + Math.floor(fPlayerY)] == '#')
-			{
-				fPlayerX -= Math.sin(fPlayerA) * fSpeed;
-				fPlayerY -= Math.cos(fPlayerA) * fSpeed;
-			}
-		// console.log("W");
-	}
-	if (pressedKeys['KeyS']) {
-		fPlayerX -= Math.sin(fPlayerA) * fSpeed;
+	if (inputController.checkAction("move_up")) {
+		fPlayerX += Math.sin(fPlayerA) * fSpeed;
+		fPlayerY += Math.cos(fPlayerA) * fSpeed;
+		if (map[Math.floor(fPlayerX) * nMapWidth + Math.floor(fPlayerY)] == '#')
+		{
+			fPlayerX -= Math.sin(fPlayerA) * fSpeed;
 			fPlayerY -= Math.cos(fPlayerA) * fSpeed;
-			if (map[Math.floor(fPlayerX) * nMapWidth + Math.floor(fPlayerY)] == '#')
-			{
-				fPlayerX += Math.sin(fPlayerA) * fSpeed;
-				fPlayerY += Math.cos(fPlayerA) * fSpeed;
-			}
-		// console.log("S");
+		}
+	}
+	if (inputController.checkAction("move_down")) {
+		fPlayerX -= Math.sin(fPlayerA) * fSpeed;
+		fPlayerY -= Math.cos(fPlayerA) * fSpeed;
+		if (map[Math.floor(fPlayerX) * nMapWidth + Math.floor(fPlayerY)] == '#')
+		{
+			fPlayerX += Math.sin(fPlayerA) * fSpeed;
+			fPlayerY += Math.cos(fPlayerA) * fSpeed;
+		}
 	}
 }
 
+/**
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Object} img
+ */
 function ColorGlyph(x, y, img) {
 	const sx = Math.floor(x*img.width);
 	const sy = Math.floor(y*img.height - 1);
@@ -256,18 +257,23 @@ function ColorGlyph(x, y, img) {
 	return [img.data[pos],img.data[pos+1],img.data[pos+2],img.data[pos+3]];
 }
 
-function gameFinish() {
+/**
+ * @param {InputController} inputController
+ * @param {KeyboardObserver} keyboardObserver
+ */
+function gameFinish(inputController, keyboardObserver) {
 	ctx.font = "100px";
 	ctx.fillText("WIN! Press any key", screen.width/2, screen.height/2);
-	document.removeEventListener("keydown", controlKeyDown);
-	document.removeEventListener("keyup", controlKeyUp);
-	document.addEventListener("keydown", exitToMenu);
-	//menu();
+	inputController.unsetControllerListener();
+	keyboardObserver.addEventListener("keydown", exitToMenu);
 }
 
-function exitToMenu() {
-	document.removeEventListener("keydown", exitToMenu);
-	menu();
+/**
+ * @param {KeyboardObserver} keyboardObserver
+ */
+function exitToMenu(keyboardObserver) {
+	keyboardObserver.removeEventListener("keydown", exitToMenu);
+	menu(keyboardObserver);
 }
 //var spriteWall = {};
 //spriteWall.data = []
@@ -283,7 +289,12 @@ function exitToMenu() {
 //}
 //gameLoop();
 
-function startGame(isRandomMaze) {
+/**
+ * @param {Boolean} isRandomMaze
+ * @param {InputController} inputController
+ * @param {KeyboardObserver} keyboardObserver
+ */
+function startGame(isRandomMaze, inputController, keyboardObserver) {
 	nScreenWidth = screen.width;
 	nScreenHeight = screen.height;
 
@@ -336,16 +347,9 @@ function startGame(isRandomMaze) {
 	tp1 = new Date();
 	tp2 = new Date();
 
-	pressedKeys = { 
-		"KeyW": false,
-		"KeyA": false,
-		"KeyS": false,
-		"KeyD": false
-	};
-
-	document.addEventListener("keydown", controlKeyDown);
-	document.addEventListener("keyup", controlKeyUp);
-	gameLoop();
+	inputController.setControllerListener();
+	const loop = getGameLoop(inputController, keyboardObserver);
+	loop();
 }
 
 var menuClass = {
@@ -353,7 +357,13 @@ var menuClass = {
 	"selected": 0
 }
 
-function menuKeys(key) {
+/**
+ * @param {InputController} inputController
+ * @param {KeyboardObserver} keyboardObserver
+ * @param {Object} key
+ * @param {String} key.code
+ */
+function menuKeys(inputController, keyboardObserver, key) {
 	if (key.code == "KeyW") {
 		if (menuClass.selected > 0) {
 			menuClass.selected--;
@@ -369,13 +379,13 @@ function menuKeys(key) {
 	if (key.code == "Enter") {
 		switch (menuClass.selected) {
 			case 0: {
-				document.removeEventListener("keydown", menuKeys);
-				startGame(false);
+				keyboardObserver.removeEventListener("keydown", menuKeys);
+				startGame(false, inputController, keyboardObserver);
 				break;
 			}
 			case 1:{
-				document.removeEventListener("keydown", menuKeys);
-				startGame(true);
+				keyboardObserver.removeEventListener("keydown", menuKeys);
+				startGame(true, inputController, keyboardObserver);
 				break;
 			}
 			case 2: {
@@ -396,8 +406,11 @@ function drawMenu() {
 	});
 }
 
-function menu() {
-	document.addEventListener("keydown", menuKeys);
+/**
+ * @param {KeyboardObserver} keyboardObserver
+ */
+function menu(keyboardObserver) {
+	keyboardObserver.addEventListener("keydown", menuKeys);
 	drawMenu();
 }
 
@@ -410,7 +423,7 @@ function setTexture() {
 		return;
 	}
 	var img = document.createElement("img");
-	img.addEventListener("load", ()=>{
+	img.addEventListener("load", () => {
 		if (img.width != 32 || img.height != 32) {
 			drawError("Image size is not 32x32");
 			input.value = null;
@@ -439,4 +452,14 @@ function drawError(errorString) {
 	ctx.fillText(errorString, 10, 10);
 }
 
-menu();
+function main() {
+	const keyboardAdapter = new DocumentToKeyboardAdapter(document);
+	const inputController = new InputController(keyboardAdapter);
+
+	menuKeys = menuKeys.bind(this, inputController, keyboardAdapter);
+	exitToMenu = exitToMenu.bind(this, keyboardAdapter);
+
+	menu(keyboardAdapter);
+}
+
+main();
