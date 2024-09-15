@@ -1,0 +1,18 @@
+{
+  "name": "mazesw",
+  "version": "0.0.1",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha Test/ --require esm",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "mocha": "^10.7.3"
+  },
+  "dependencies": {
+    "esm": "^3.2.25"
+  }
+}
