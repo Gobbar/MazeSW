@@ -52,13 +52,13 @@ function controlKeyUp(key) {
 
 function gameLoop() {
 	tp2 = new Date();
-	fElapsedTime = Math.abs(tp2 - tp1);
+	const fElapsedTime = Math.abs(tp2 - tp1);
 	tp1 = tp2;
 
 	controlsKeys();
 	drawScene();
 	drawMap();
-	displayParams();
+	displayParams(fElapsedTime);
 	if (map[(Math.floor(fPlayerX)*nMapWidth + Math.floor(fPlayerY))] != "@") { 
 		setTimeout(gameLoop, 0);
 	}
@@ -67,11 +67,11 @@ function gameLoop() {
 	}
 }
 
-function displayParams() {
+function displayParams(deltaTime) {
 	pPlayerX.innerHTML = fPlayerX;
 	pPlayerY.innerHTML = fPlayerY;
 	pPlayerA.innerHTML = fPlayerA;
-	FPS.innerHTML = 1000/fElapsedTime;
+	FPS.innerHTML = 1000/deltaTime;
 }
 
 function drawScene() {
@@ -153,8 +153,8 @@ function drawScene() {
 			else {
 				if (y > nCeiling && y <= nFloor) { //Стены
 					if (fDistanceToWall < fDepth) {
-						var fSampleY = (y - nCeiling) / (nFloor - nCeiling);
-						var a = ColorGlyph(fSampleX, fSampleY, spriteWall);
+						const fSampleY = (y - nCeiling) / (nFloor - nCeiling);
+						const a = ColorGlyph(fSampleX, fSampleY, spriteWall);
 						screenAr.data[pos] =   a[0];
 						screenAr.data[pos+1] = a[1];
 						screenAr.data[pos+2] = a[2];
@@ -248,9 +248,9 @@ function controlsKeys() {
 }
 
 function ColorGlyph(x, y, img) {
-	var sx = Math.floor(x*img.width);
-	var sy = Math.floor(y*img.height - 1);
-	var pos = (sy*img.width+sx)*4;
+	const sx = Math.floor(x*img.width);
+	const sy = Math.floor(y*img.height - 1);
+	const pos = (sy*img.width+sx)*4;
 	if (sx < 0 || sx >= img.width || sy < 0 || sy >= img.height)
 		return  [255,255,255,255];
 	return [img.data[pos],img.data[pos+1],img.data[pos+2],img.data[pos+3]];
